@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Weather app</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link th:href="@{/css/main.css}" rel="stylesheet" />
+</head>
+
+<body>
+
+<h1>Simple Forcast</h1>
+
+<form action="/" method="get">
+    <input type="submit" value="Go home" />
+</form>
+
+<p th:text="|Selected location: ${name}|"></p>
+
+<div class="hourForcastList" th:utext="${injectToHtml}"></div>
+
+<script type="text/javascript" th:src="@{/js/script.js}"></script>
+</body>
+
+</html>

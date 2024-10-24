@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Weather app</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" href="./css/main.css">
+</head>
+
+<body>
+
+<h1>Select your location</h1>
+
+<form action="/data" method="get">
+
+    <label for="locationSelect">Select City: </label>
+    <select id="locationSelect" name="location">
+        <option value="ostrava">Ostrava</option>
+        <option value="roznov_pod_radhostem">Rožnov pod Radnoštěm</option>
+        <option value="brno">Brno</option>
+        <option value="olomouc">Olomouc</option>
+        <option value="dublin">Dublin</option>
+        <option value="prague">Prague</option>
+    </select>
+
+    <input type="submit" value="submit">
+</form>
+
+</body>
+
+</html>
