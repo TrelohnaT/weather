@@ -19,22 +19,22 @@ public class DataIT {
 
     @Test
     void getHtmlExistingCity() {
-        assertTrue(dataService.fetchDataGetAsHtml("ostrava").isPresent());
+        assertTrue(dataService.getDataAsHtml("ostrava").isPresent());
     }
 
     @Test
     void getHtmlNonExistingCity() {
-        assertFalse(dataService.fetchDataGetAsHtml("tralaland").isPresent());
+        assertFalse(dataService.getDataAsHtml("tralaland").isPresent());
     }
 
     @Test
     void getJsonExistingCity() {
-        assertTrue(dataService.fetchDataGetAsJson("ostrava").isPresent());
+        assertTrue(dataService.getDataAsJson("ostrava").isPresent());
     }
 
     @Test
     void getJsonNonExistingCity() {
-        assertFalse(dataService.fetchDataGetAsJson("tralaland").isPresent());
+        assertFalse(dataService.getDataAsJson("tralaland").isPresent());
     }
 
 }

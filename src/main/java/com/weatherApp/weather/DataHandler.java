@@ -5,15 +5,18 @@ import com.weatherApp.weather.util.Location;
 import com.weatherApp.weather.util.SupportedParametersHourly;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class DataHandler implements DataService {
 
     private final Map<String, Location> locationMap = new HashMap<>();
+    private final Map<String, List<DataContainer>> cache = new HashMap<>();
 
     public DataHandler() {
         // supported locations
@@ -26,27 +29,52 @@ public class DataHandler implements DataService {
         this.locationMap.put("dublin", new Location("dublin", 53.34, -6.26));
     }
 
-    public Optional<String> fetchDataGetAsJson(String locationName) {
-        Optional<String> rawData = getDataFromWeb(locationName);
-        if (!rawData.isPresent()) {
-            return Optional.empty();
+    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
+    public void fetchingDataEveryHour() {
+        this.cache.clear();
+        this.locationMap.forEach((key, value) -> {
+            Optional<String> tmp = getDataFromWeb(value.Name());
+            tmp.ifPresent(s -> cache.put(key, processRawData(s)));
+        });
+    }
+
+    private List<DataContainer> getOrFetch(String locationName) {
+        List<DataContainer> data = new LinkedList<>();
+        if (this.cache.containsKey(locationName)) {
+            data = this.cache.get(locationName);
+        } else {
+            Optional<String> tmp = getDataFromWeb(locationName);
+            if (tmp.isPresent()) {
+                data = processRawData(tmp.get());
+                this.cache.put(locationName, data);
+            }
         }
-        List<DataContainer> data = this.processRawData(rawData.get());
+        return data;
+    }
+
+    /**
+     * Get data as Json.
+     *
+     * @param locationName name of location (city)
+     * @return data as json string
+     */
+    public Optional<String> getDataAsJson(String locationName) {
+        List<DataContainer> data = getOrFetch(locationName);
         if (data.isEmpty()) {
             System.out.println("unknown location: " + locationName);
             return Optional.empty();
         }
-        return Optional.of(getAsJson(data).toString());
+        return Optional.of(convertToJson(data).toString());
 
     }
 
     /**
-     * Generate JSON representation of DataContainers.
+     * Convert data to the JSON.
      *
      * @param data data
      * @return maybe JSON representation.
      */
-    JSONArray getAsJson(List<DataContainer> data) {
+    JSONArray convertToJson(List<DataContainer> data) {
         JSONArray ja = new JSONArray();
         for (DataContainer dc : data) {
             ja.put(dc.getAsJson());
@@ -55,31 +83,27 @@ public class DataHandler implements DataService {
     }
 
     /**
-     * Wrapper for fetchData function. Prepares data for export to web.
+     * Get data from cache or API and returns them as HTML string.
      *
      * @param locationName name of location (city)
-     * @return html representation of data
+     * @return data as html string
      */
-    public Optional<String> fetchDataGetAsHtml(String locationName) {
-        Optional<String> rawData = getDataFromWeb(locationName);
-        if (!rawData.isPresent()) {
-            return Optional.empty();
-        }
-        List<DataContainer> data = this.processRawData(rawData.get());
+    public Optional<String> getDataAsHtml(String locationName) {
+        List<DataContainer> data = getOrFetch(locationName);
         if (data.isEmpty()) {
             System.out.println("processing of Raw Data failed");
             return Optional.empty();
         }
-        return getAsHtml(data);
+        return convertToHtml(data);
     }
 
     /**
-     * Generate HTML representation of DataContainers.
+     * Convert data to the HTML.
      *
      * @param data data
      * @return maybe HTML representation.
      */
-    Optional<String> getAsHtml(List<DataContainer> data) {
+    Optional<String> convertToHtml(List<DataContainer> data) {
         StringBuilder sb = new StringBuilder();
         for (DataContainer dc : data) {
             sb.append(dc.getAsSimpleHtml());
@@ -94,6 +118,12 @@ public class DataHandler implements DataService {
      * @return data
      */
     List<DataContainer> processRawData(String rawData) {
+        List<DataContainer> dataContainerList = new LinkedList<>();
+
+        if (rawData == null || rawData.isEmpty()) {
+            return dataContainerList;
+        }
+
         JSONObject jsonData;
         JSONObject jsonUnits;
 
@@ -101,7 +131,7 @@ public class DataHandler implements DataService {
         try {
             jsonData = new JSONObject(rawData).getJSONObject("hourly");
         } catch (Exception e) {
-            System.out.println("could NOT find hourly");
+            System.out.println("could NOT find hourly - bad input data");
             e.printStackTrace();
             return new LinkedList<>();
         }
@@ -109,12 +139,12 @@ public class DataHandler implements DataService {
         try {
             jsonUnits = new JSONObject(rawData).getJSONObject("hourly_units");
         } catch (Exception e) {
-            System.out.println("could NOT find hourly_units");
+            System.out.println("could NOT find hourly_units - bad input data");
             e.printStackTrace();
             return new LinkedList<>();
         }
 
-        List<DataContainer> dataContainerList = new LinkedList<>();
+        dataContainerList = new LinkedList<>();
         Map<SupportedParametersHourly, List<String>> helpValueMap = new HashMap<>();
         Map<SupportedParametersHourly, String> helpUnitMap = new HashMap<>();
         // set value for each hour, this will reduce calling of getStringValues

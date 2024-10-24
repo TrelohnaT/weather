@@ -5,8 +5,8 @@ import java.util.Optional;
 
 public interface DataService {
 
-    Optional<String> fetchDataGetAsJson(String locationName);
+    Optional<String> getDataAsJson(String locationName);
 
-    Optional<String> fetchDataGetAsHtml(String locationName);
+    Optional<String> getDataAsHtml(String locationName);
 
 }

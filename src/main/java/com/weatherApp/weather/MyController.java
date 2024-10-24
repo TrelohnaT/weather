@@ -20,7 +20,7 @@ public class MyController {
     @GetMapping("/data")
     public String index(@RequestParam(name = "location", required = false, defaultValue = "unknown") String location,
                         Model model) {
-        Optional<String> htmlOutput = dataService.fetchDataGetAsHtml(location);
+        Optional<String> htmlOutput = dataService.getDataAsHtml(location);
 
         if (htmlOutput.isPresent()) {
             model.addAttribute("name", location);
